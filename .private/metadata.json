@@ -1,0 +1,169 @@
+{
+  "project": "task288-dropletlineage",
+  "requirement_id": "REQ-20260826-151",
+  "project_path": "/Users/chengjie/bytedance/go/go_bugfix/task0827/task288-dropletlineage/env",
+  "baseline_commit": "e82261e6f546ba9467cacc10d288961bd16430b3",
+  "go_version": "go1.26.3",
+  "go_mod_version": "1.26.3",
+  "go_bin": "/opt/homebrew/bin/go",
+  "goproxy": "https://goproxy.cn,direct",
+  "gosumdb": "sum.golang.google.cn",
+  "docker_images": {
+    "builder": "golang:1.26.3-bookworm",
+    "runtime": "golang:1.26.3-bookworm"
+  },
+  "target_platforms": [
+    "linux/amd64",
+    "linux/arm64"
+  ],
+  "docker_validation": {
+    "status": "generated-not-run",
+    "note": "Dockerfile/benzhi.Dockerfile/build_benzhi_docker.sh 已生成；按 go-req-pool-codegen 约定本环节不执行 docker build，双架构验证由 go-generated-annotation-bugfix 项目验收阶段执行。"
+  },
+  "components": {
+    "sqlite": "3.46.1"
+  },
+  "source_scale": {
+    "production_go_files": 37,
+    "production_go_lines": 3623,
+    "test_files": 3
+  },
+  "source_metrics": {
+    "production_go_files": 37,
+    "production_go_lines": 3623,
+    "test_files": 3,
+    "api_endpoints": 29,
+    "business_packages": 9,
+    "sqlite_tables": 10
+  },
+  "question_qualification": {
+    "status": "passed",
+    "comparison_corpus": [
+      "需求池全部历史需求（截至 REQ-20260826-151）",
+      "taskMMDD 已生成项目近邻：task169-microfluidbench（微流控芯片通道拓扑校验）、task237-yeastbarcode（酵母条形码谱系污染判别）、task215-fiberlineage（古籍纸张纤维谱系比对）、task228-seedgerm（种子萌发生长时序）"
+    ],
+    "nearest_requirements": [
+      {
+        "id": "REQ-20260822-031",
+        "name": "微流控芯片通道拓扑校验台（task169-microfluidbench）",
+        "shared_aspect": "都属微流控领域，以流体对象为分析客体并输出可冻结快照。",
+        "material_difference": "microfluidbench 校验静态芯片拓扑（节点/边/隔离区）的流路可达性、死腔与交叉污染；本题追踪高速成像中液滴的跨帧动态谱系（帧序列→观测→分裂/合并守恒→遮挡裁决），核心是体积/荧光标记守恒验证与不可变谱系版本，实体（帧/观测/事件边 vs 拓扑图/流程步骤）、数据表与算法（最近邻跟踪/守恒判定 vs BFS 可达性）全部不同。"
+      },
+      {
+        "id": "REQ-20260824-105",
+        "name": "酵母条形码谱系污染判别服务（task237-yeastbarcode-rerun-v2）",
+        "shared_aspect": "都构建实验数据的代次谱系（继承边）并输出不可变判别快照。",
+        "material_difference": "yeastbarcode 按代次继承边关联条形码簇并判别外来污染；本题按空间近邻与速度外推关联液滴跨帧观测，验证分裂/合并的体积与荧光标记守恒（球形体积公式 + 淬灭容差），判定对象（连续时空观测 vs 离散代次簇）、守恒不变量（体积/强度 vs 条形码质量分数）与产物（谱系版本 vs 污染判别快照）均不同。"
+      },
+      {
+        "id": "REQ-20260823-097",
+        "name": "古籍纸张纤维谱系比对台（task215-fiberlineage）",
+        "shared_aspect": "都以「谱系」为产出概念并支持合并/拆分谱系与版本冻结。",
+        "material_difference": "fiberlineage 基于染料峰/修补层序相似度推断古籍纸张来源谱系假设图；本题基于液滴分裂/合并的物理守恒（父代体积=Σ子代、标记不凭空增加）构造确定性谱系事件，输入是成像观测而非纤维图谱特征，相似度推断 vs 守恒验证是两类不同判定。"
+      },
+      {
+        "id": "REQ-20260825-090",
+        "name": "种子萌发生长时序服务（task228-seedgerm）",
+        "shared_aspect": "都处理带时间戳的生物学观测序列并跟踪个体状态变化。",
+        "material_difference": "seedgerm 按萌发窗口聚合种子生长状态（根长/芽长时序）；本题对液滴做帧间位置匹配（最近邻+速度外推）与分裂/合并守恒验证，个体粒度（液滴 vs 种子）、守恒判定（体积/标记 vs 生长阈值）与谱系事件（分裂/合并/遮挡 vs 萌发阶段）均不同。"
+      }
+    ],
+    "core_loop": "创建批次→导入帧与液滴观测（帧序单调/坐标校验/幂等）→跨帧跟踪（最近邻+速度外推+遮挡断裂候选）→申报分裂/合并事件→守恒校验（体积+荧光标记）→裁决确认/否决→创建谱系版本并冻结→批次发布/封存",
+    "state_machine": "批次 importing→tracking→review→published→archived；观测 raw→tracked/occluded→excluded；谱系事件 candidate→split/merge/conservation_conflict→confirmed/rejected；版本 draft→shared→frozen→superseded",
+    "storage_and_recovery": "SQLite 持久化 batches/frames/observations/tracks/track_links/lineage_events/event_participants/conservation_checks/versions/version_events；帧 (batch_id,seq) 与观测 (batch_id,droplet_key,frame_seq) 幂等、版本 (batch_id,rev) 唯一；--smoke-test 关闭重开同一数据库验证批次/事件/版本/替代链全部恢复并可续写新帧",
+    "api_responsibilities": "29 个 /api 端点覆盖批次、帧、观测、跟踪、谱系事件、守恒校验、裁决、版本发布/派生、统计/健康/自检",
+    "non_substitutable_difference": "换名词也不能得到既有项目闭环：液滴跨帧跟踪（最近邻+速度外推）→ 分裂/合并的体积与荧光标记守恒验证（球形体积公式+淬灭容差）→ 遮挡候选裁决 → 不可变谱系版本发布，是微流控成像特有的物理守恒闭环，无法改写为芯片拓扑校验、条形码污染判别、纤维相似度推断或萌发时序聚合。"
+  },
+  "cross_project_similarity_audit": {
+    "status": "passed",
+    "candidate_project": "task288-dropletlineage",
+    "nearest_projects": [
+      "task169-microfluidbench",
+      "task237-yeastbarcode-rerun-v2",
+      "task215-fiberlineage",
+      "task228-seedgerm"
+    ],
+    "same_elements": [
+      "SQLite 持久化（modernc.org/sqlite）",
+      "HTTP /api 路由",
+      "幂等导入与不可变快照发布",
+      "批次/版本状态机"
+    ],
+    "different_elements": [
+      "领域模型：液滴观测/谱系事件/守恒检查 vs 拓扑图/条形码簇/纤维特征",
+      "核心算法：最近邻跟踪+速度外推+球形体积守恒 vs BFS 可达性/编辑距离归并/相似度权重",
+      "数据表：frames/observations/tracks/lineage_events vs chips/nodes/edges/barcode_clusters",
+      "API 形态：帧导入/跟踪/守恒/裁决 vs 拓扑绘制/步骤校验/污染判别",
+      "主不变量：体积与荧光标记守恒（物理） vs 可达性/质量分数/相似度（统计）"
+    ],
+    "conclusion": "与最近邻项目仅共享通用设施（SQLite/HTTP/状态机/快照），领域模型、状态机、数据表、API 与核心不变量全部不同，非换皮，通过。"
+  },
+  "requirement_traceability": [
+    {
+      "requirement": "创建流程批次并管理状态",
+      "design_section": "2. 业务闭环与状态机（批次状态机）",
+      "source_symbols": "service.App.CreateBatch/TransitionBatch, model.CanTransition",
+      "api": "POST /api/batches, POST /api/batches/{id}/transition",
+      "storage": "batches",
+      "e2e_evidence": "smoke: 创建批次 status=importing，转 tracking/review/published 成功"
+    },
+    {
+      "requirement": "导入帧事件（帧序单调、幂等）",
+      "design_section": "3. 持久化与重启恢复；5. 关键不变量",
+      "source_symbols": "ingest.Service.ImportFrame, store.FrameStore.Create/GetBySeq",
+      "api": "POST/GET /api/batches/{id}/frames",
+      "storage": "frames",
+      "e2e_evidence": "ingest 单测 TestImportFrameSequenceRegression；smoke 帧序幂等"
+    },
+    {
+      "requirement": "导入液滴观测（位置/半径/荧光标记）",
+      "design_section": "3. 持久化与重启恢复；5. 关键不变量",
+      "source_symbols": "ingest.Service.ImportObservation, ingest.Validator.ValidateObservation, model.SphereVolume",
+      "api": "POST /api/batches/{id}/frames/{seq}/observations",
+      "storage": "observations",
+      "e2e_evidence": "ingest 单测 TestImportObservationValidation；smoke 坐标越界拒绝/幂等"
+    },
+    {
+      "requirement": "跨帧跟踪与遮挡候选",
+      "design_section": "2. 业务闭环（跟踪）；4. API 与模块责任",
+      "source_symbols": "tracking.Matcher.Build, tracking.Service.Run, service.App.syncOcclusionEvents",
+      "api": "POST /api/batches/{id}/track, GET /api/batches/{id}/tracks",
+      "storage": "tracks, track_links, lineage_events(kind=occlusion)",
+      "e2e_evidence": "matcher 单测 TestMatcherNearestAndExtrapolation/TestMatcherOcclusionBreak；smoke BrokenCount=1"
+    },
+    {
+      "requirement": "分裂/合并守恒校验",
+      "design_section": "2. 业务闭环（守恒校验）；5. 关键不变量",
+      "source_symbols": "conservation.Service.CheckEvent, conservation.ComputeVolumeChecks/ComputeMarkerChecks, model.CheckVolumeConservation/CheckMarkerConservation",
+      "api": "POST /api/events/{id}/check, POST /api/batches/{id}/conservation-check",
+      "storage": "conservation_checks, lineage_events",
+      "e2e_evidence": "model 单测 TestCheckVolumeConservation/TestCheckMarkerConservation；smoke split/merge 均 EventSplit/EventMerge"
+    },
+    {
+      "requirement": "遮挡裁决与事件确认",
+      "design_section": "2. 业务闭环（裁决）；5. 关键不变量",
+      "source_symbols": "verdict.Service.Decide, model.ErrEventClosed",
+      "api": "PUT /api/events/{id}/confirm|reject",
+      "storage": "lineage_events(status=confirmed/rejected, decided_at)",
+      "e2e_evidence": "smoke 三事件确认成功，重复裁决 ErrEventClosed"
+    },
+    {
+      "requirement": "谱系版本发布与派生",
+      "design_section": "2. 业务闭环（版本）；5. 关键不变量",
+      "source_symbols": "version.Service.CreateDraft/Publish/Derive/DetailOf, store.VersionStore",
+      "api": "POST /api/batches/{id}/versions, POST /api/versions/{id}/publish|derive, GET /api/versions/{id}",
+      "storage": "versions, version_events",
+      "e2e_evidence": "smoke 版本含 3 事件→冻结→派生继承事件集→原版本 superseded→重启后替代链恢复"
+    },
+    {
+      "requirement": "持久化与重启恢复",
+      "design_section": "3. 持久化与重启恢复",
+      "source_symbols": "store.Open/migrate, cmd/task288 runSmokeTest",
+      "api": "go run ./cmd/task288 --smoke-test",
+      "storage": "全部 10 表",
+      "e2e_evidence": "smoke 关闭重开同一数据库：批次 published/4 帧/19 观测/3 事件/版本替代链恢复，续写帧 5 成功"
+    }
+  ],
+  "blocking_gaps": [],
+  "metadata_status": "complete"
+}
